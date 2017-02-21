@@ -22,9 +22,11 @@ import android.support.annotation.RequiresApi;
 
 public class MyNameProvider extends ContentProvider {
 
+    private int counter=0;
     private static final int NAME=1;
     private static UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     SharedPreferences sharedPreferences;
+    MyCursor myCursor;
 
     static {
         uriMatcher.addURI(ContentProviderAct.CONTENT_AUTHROITY,ContentProviderAct.PATH_NAME,NAME);
@@ -33,11 +35,11 @@ public class MyNameProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        myCursor = new MyCursor();
         sharedPreferences = getContext().getSharedPreferences("MySp", Context.MODE_PRIVATE);
         return false;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Nullable
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String orderBy) {
@@ -45,17 +47,17 @@ public class MyNameProvider extends ContentProvider {
 
         switch (match){
             case NAME:
-
                 String name = sharedPreferences.getString(projection[0], "empty");
                 Bundle bundle = new Bundle();
                 bundle.putString("name",name);
-                cursor.setExtras(bundle);
+                myCursor.myData = bundle;
                 break;
             default:
                 throw new IllegalArgumentException();
 
         }
-        return null;
+        myCursor.setNotificationUri(getContext().getContentResolver(),uri);
+        return myCursor;
     }
 
     @Nullable
@@ -67,7 +69,21 @@ public class MyNameProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(Uri uri, ContentValues contentValues) {
-        return null;
+        Uri retVal;
+        int match = uriMatcher.match(uri);
+        switch (match){
+            case NAME:
+                String name = contentValues.getAsString("name");
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("name",name);
+                editor.commit();
+                retVal=Uri.parse("new name:"+name);
+                break;
+            default:
+                throw new IllegalArgumentException("wrong insert uri");
+        }
+        getContext().getContentResolver().notifyChange(uri,null);
+        return retVal;
     }
 
     @Override
@@ -80,8 +96,9 @@ public class MyNameProvider extends ContentProvider {
         return 0;
     }
 
-    Cursor cursor = new Cursor() {
+    public class MyCursor implements Cursor {
 
+        public Bundle myData;
         @Override
         public int getCount() {
             return 0;
@@ -174,7 +191,9 @@ public class MyNameProvider extends ContentProvider {
 
         @Override
         public String getString(int i) {
-            return null;
+            counter++;
+            return "kkkkk:"+counter;
+
         }
 
         @Override
@@ -287,4 +306,5 @@ public class MyNameProvider extends ContentProvider {
             return null;
         }
     };
+
 }

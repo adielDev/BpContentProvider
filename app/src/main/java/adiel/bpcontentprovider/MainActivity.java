@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     public void save(View view) {
         SharedPreferences sharedPreferences = getSharedPreferences("MySp",MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("data",et.getText().toString());
+        editor.putString("name",et.getText().toString());
         editor.commit();
     }
 
